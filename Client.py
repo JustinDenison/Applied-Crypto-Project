@@ -1,6 +1,6 @@
 import socket
 
-host = socket.gethostname()
+host = '172.20.10.3'  # Your server's IP address
 port = 2004  #server port
 BUFFER_SIZE = 2000
 #MESSAGE = input("Client: Enter message/ Enter exit:")
