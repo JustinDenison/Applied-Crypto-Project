@@ -17,7 +17,6 @@ from typing import Any, Dict, Optional
 def send_request(sock: socket.socket, req: Dict[str, Any]) -> Dict[str, Any]:
     data = json.dumps(req, separators=(",", ":")) + "\n"
     sock.sendall(data.encode("utf-8"))
-    # Read a single line response
     line = b""
     while not line.endswith(b"\n"):
         chunk = sock.recv(4096)

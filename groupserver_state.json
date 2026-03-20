@@ -1,0 +1,21 @@
+{
+  "users": [
+    "admin",
+    "bob"
+  ],
+  "groups": {
+    "ADMIN": {
+      "owner": "admin",
+      "members": [
+        "admin"
+      ]
+    },
+    "research": {
+      "owner": "admin",
+      "members": [
+        "admin",
+        "bob"
+      ]
+    }
+  }
+}

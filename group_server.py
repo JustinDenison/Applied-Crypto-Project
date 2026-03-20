@@ -25,7 +25,6 @@ def load_state() -> Dict[str, Any]:
         with open(STATE_FILE, "r", encoding="utf-8") as f:
             return json.load(f)
 
-    # Initial default state: create ADMIN group with one admin user
     return {
         "users": ["admin"],
         "groups": {
@@ -170,7 +169,6 @@ def handle_client(conn: socket.socket, addr, state: Dict[str, Any], lock: thread
                 send_json(conn, {"status": "error", "message": f"Unknown op: {op}"})
 
     except Exception as e:
-        # Keep server running even if one connection fails
         print(f"[GroupServer] Error handling {addr}: {e}")
     finally:
         conn.close()
