@@ -1,10 +1,12 @@
 import socket
+import sys
 
-host = '172.20.10.3'  # Your server's IP address
-port = 2004  #server port
+host = sys.argv[1]
+port = int(sys.argv[2])
+
 BUFFER_SIZE = 2000
-#MESSAGE = input("Client: Enter message/ Enter exit:")
 MESSAGE = ""
+
 tcpClient = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 tcpClient.connect((host, port))
 
@@ -17,3 +19,4 @@ while MESSAGE != 'exit':
 
 print("Client Terminating")
 tcpClient.close()
+                   
