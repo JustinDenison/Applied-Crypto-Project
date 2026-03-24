@@ -1,0 +1,194 @@
+Distributed File Sharing System - Complete Command Reference
+
+1. Basic TCP Server/Client (Server.py + Client.py)
+
+Server Commands
+python Server.py
+- What it does: Starts a multithreaded TCP echo server
+- Default binding: 0.0.0.0:2004
+- No command-line arguments (hardcoded host/port)
+
+Client Commands
+python Client.py <host> <port>
+- What it does: Connects to the TCP server and allows interactive messaging
+- Examples:
+  python Client.py localhost 2004
+  python Client.py 172.20.10.3 2004
+
+Interactive commands in client:
+- Type any message and press Enter (sends to server, receives echo response)
+- Type exit to quit the client
+
+---
+
+2. Phase 2 Group Server (group_server.py)
+
+Server Commands
+python group_server.py
+python group_server.py --host <host> --port <port>
+- What it does: Starts the group management server that handles user/group operations
+- Command-line options:
+  --host (default: 0.0.0.0) - Host to bind to
+  --port (default: 12345) - Port to bind to
+- Examples:
+  python group_server.py --host 0.0.0.0 --port 12345
+  python group_server.py --host localhost --port 8080
+
+---
+
+3. Phase 2 File Server (file_server.py)
+
+Server Commands
+python file_server.py
+python file_server.py --host <host> --port <port>
+- What it does: Starts the file management server that handles file upload/download operations
+- Command-line options:
+  --host (default: 0.0.0.0) - Host to bind to
+  --port (default: 12346) - Port to bind to
+- Examples:
+  python file_server.py --host 0.0.0.0 --port 12346
+  python file_server.py --host localhost --port 8081
+
+---
+
+4. Phase 2 Interactive Client (p2client.py)
+
+Client Commands
+python p2client.py
+python p2client.py --group-host <host> --group-port <port> --file-host <host> --file-port <port>
+- What it does: Starts the interactive client for Phase 2 operations
+- Command-line options:
+  --group-host (default: localhost) - Group server host
+  --group-port (default: 12345) - Group server port
+  --file-host (default: localhost) - File server host
+  --file-port (default: 12346) - File server port
+- Examples:
+  python p2client.py --group-host localhost --group-port 12345 --file-host localhost --file-port 12346
+  python p2client.py --group-host 192.168.1.100 --group-port 12345 --file-host 192.168.1.100 --file-port 12346
+
+Interactive Commands (in p2client.py prompt)
+
+Session Management
+getToken <user>           - Obtain token for user (creates user if doesn't exist)
+token                     - Display current token
+exit | quit               - Exit client
+help                      - Show help
+
+User Management (requires ADMIN token)
+createUser <user>         - Create new user (ADMIN only)
+
+Group Management
+createGroup <group>       - Create group (you become owner)
+addUserToGroup <user> <group>  - Add user to group (owner only)
+listMembers <group>       - List group members (owner only)
+
+File Operations
+listFiles                 - List files you can access
+upload <local> <remote> <group>  - Upload file to group
+download <remote> <local>  - Download file
+
+---
+
+5. Testing and Development Commands
+
+Compilation/Validation
+python -m py_compile Server.py Client.py group_server.py file_server.py p2client.py
+- What it does: Checks all Python files compile without syntax errors
+
+python -m py_compile <filename>
+- What it does: Check specific file for syntax errors
+
+Network Testing
+ss -tlnp | grep <port>
+- What it does: Check if port is listening on the system
+
+nc -vz <host> <port>
+- What it does: Test TCP connection to host:port
+
+telnet <host> <port>
+- What it does: Interactive TCP connection test
+
+ping <host>
+- What it does: Test basic network connectivity
+
+File Operations
+echo "test content" > test.txt
+- What it does: Create a test file with content
+
+cat <filename>
+- What it does: Display file contents
+
+ls -la
+- What it does: List directory contents with details
+
+wc -c <filename>
+- What it does: Show file size in bytes
+
+---
+
+6. Complete Phase 2 Demo Workflow
+
+# Terminal 1: Start Group Server
+python group_server.py --host 0.0.0.0 --port 12345
+
+# Terminal 2: Start File Server
+python file_server.py --host 0.0.0.0 --port 12346
+
+# Terminal 3: Run Client
+python p2client.py --group-host localhost --group-port 12345 --file-host localhost --file-port 12346
+
+# In client prompt:
+getToken admin
+createUser alice
+createGroup project
+addUserToGroup alice project
+getToken alice
+echo "hello world" > test.txt
+upload test.txt hello.txt project
+listFiles
+download hello.txt downloaded.txt
+exit
+
+---
+
+7. Remote Connection Commands
+
+Find Network Information
+hostname -I
+- What it does: Show local IP addresses
+
+curl -s https://ifconfig.me
+- What it does: Show public IP address
+
+Remote Client Connections
+python Client.py <your-ip> 2004
+- What it does: Connect basic client to remote server
+
+python p2client.py --group-host <your-ip> --group-port 12345 --file-host <your-ip> --file-port 12346
+- What it does: Connect Phase 2 client to remote servers
+
+---
+
+8. Port Forwarding (for internet access)
+
+Firewall Management
+sudo ufw status
+- What it does: Check firewall status
+
+sudo ufw allow 2004/tcp
+sudo ufw allow 12345/tcp
+sudo ufw allow 12346/tcp
+- What it does: Allow TCP ports through firewall
+
+Router Configuration
+- What it does: Forward external ports 2004, 12345, 12346 to your machine's local IP
+- Note: Configure in your router's admin interface
+
+---
+
+Notes
+- Tokens are plain JSON objects (no crypto for Phase 2)
+- Server state is stored in JSON files: groupserver_state.json, fileserver_metadata.json
+- Uploaded files are stored in the storage/ directory
+- All servers support multiple concurrent clients
+- Use Ctrl+C to stop servers
