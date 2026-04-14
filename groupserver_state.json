@@ -1,7 +1,8 @@
 {
   "users": [
     "admin",
-    "bob"
+    "bob",
+    "alice"
   ],
   "groups": {
     "ADMIN": {
@@ -16,6 +17,28 @@
         "admin",
         "bob"
       ]
+    },
+    "Tester": {
+      "owner": "admin",
+      "members": [
+        "admin",
+        "alice"
+      ]
     }
+  },
+  "server_signing_key_private": "oV+DR9yw3ZeGcpohBRDs5WCs3a9ggPTJE9oayiViF1g=",
+  "user_passwords": {
+    "admin": "$pbkdf2$v=1$iterations=100000$salt=8188ed286077236e580698d66d50bac2$hash=ec4358f418a8c4bbb76af4f1b601df84204738fbd915ac5d4d718a03f165f680",
+    "bob": "$pbkdf2$v=1$iterations=100000$salt=3db36721edddfb7841cacd57770a932e$hash=b4266eda43ac0362629139ee8777034c49ce77e3b5c324c2b100c2dcdea88e41",
+    "alice": "$pbkdf2$v=1$iterations=100000$salt=eedafde421a59d2e2ca8f6f2bea7c13d$hash=2e5d9d99871e39cf1e386970652eaf08de12640d6d553554efb81808b4b75a54"
+  },
+  "nonce_cache": {
+    "127.0.0.1:40736_1776197233.5450232": [
+      "VOzmoeD7fLgSRATS1A3nJw==",
+      "3hjUNwIeUS/qcy3TYzPIjA==",
+      "ZEgMsVyrk7Gru1cE3kizog==",
+      "fO4FNiRpK8m7HOlDNrTy5w==",
+      "EPeZcdl45OwcAjeEoJVaIw=="
+    ]
   }
 }

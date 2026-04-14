@@ -1,98 +1,264 @@
-1. Basic TCP Server/Client (Server.py + Client.py)
+PHASE 3 - CRYPTOGRAPHICALLY HARDENED DISTRIBUTED FILE SHARING SYSTEM
+====================================================================
 
-Server Commands
-python Server.py
-- What it does: Starts a multithreaded TCP echo server
-- Default binding: 0.0.0.0:2004
-- No command-line arguments (hardcoded host/port)
+REQUIREMENTS
+============
 
-Client Commands
-python Client.py <host> <port>
-- What it does: Connects to the TCP server and allows interactive messaging
-- Examples:
-  python Client.py localhost 2004
-  python Client.py 172.20.10.3 2004
+1. Install cryptography library:
+   pip install cryptography
 
-Interactive commands in client:
-- Type any message and press Enter (sends to server, receives echo response)
-- Type exit to quit the client
+2. Python 3.8+
 
 ---
 
-2. Phase 2 Group Server (group_server.py)
+STARTUP SEQUENCE
+================
 
-Server Commands
-python group_server.py
-python group_server.py --host <host> --port <port>
-- What it does: Starts the group management server that handles user/group operations
-- Command-line options:
-  --host (default: 0.0.0.0) - Host to bind to
-  --port (default: 12345) - Port to bind to
-- Examples:
-  python group_server.py --host 0.0.0.0 --port 12345
-  python group_server.py --host localhost --port 8080
+Terminal 1 - Start Group Server:
+  python group_server.py [--host 0.0.0.0] [--port 12345]
+  
+  Example:
+    python group_server.py --host localhost --port 12345
+    python group_server.py  # Uses defaults: 0.0.0.0:12345
+  
+  On first run:
+    - Creates groupserver_state.json with initial admin user
+    - Admin password: admin123
+    - Generates Ed25519 signing keypair (for token signing)
+
+Terminal 2 - Start File Server:
+  python file_server.py [--host 0.0.0.0] [--port 12346]
+  
+  Example:
+    python file_server.py --host localhost --port 12346
+    python file_server.py  # Uses defaults: 0.0.0.0:12346
+  
+  On first run:
+    - Creates fileserver_metadata.json
+    - Creates storage/ directory
+    - Loads Ed25519 public key from groupserver_state.json (for token verification)
+
+Terminal 3 - Start Client:
+  python p2client.py [--group-host localhost] [--group-port 12345] [--file-host localhost] [--file-port 12346]
+  
+  Example:
+    python p2client.py --group-host localhost --group-port 12345 --file-host localhost --file-port 12346
+    python p2client.py  # Uses all defaults
 
 ---
 
-3. Phase 2 File Server (file_server.py)
+SECURITY FEATURES (Phase 3)
+===========================
 
-Server Commands
-python file_server.py
-python file_server.py --host <host> --port <port>
-- What it does: Starts the file management server that handles file upload/download operations
-- Command-line options:
-  --host (default: 0.0.0.0) - Host to bind to
-  --port (default: 12346) - Port to bind to
-- Examples:
-  python file_server.py --host 0.0.0.0 --port 12346
-  python file_server.py --host localhost --port 8081
+T1 - Unauthorized Token Issuance: MITIGATED
+   - Password-based authentication (PBKDF2-SHA256)
+   - Tokens require valid password to obtain
+   - Default admin user password: admin123
+
+T2 - Token Forgery/Modification: MITIGATED
+   - Ed25519 digital signatures on all tokens
+   - File server verifies signature before accepting token
+   - Tampered tokens rejected
+
+T3 - Passive Network Monitoring: MITIGATED
+   - AES-256-GCM encryption on all messages
+   - Ephemeral ECDHE session keys (X25519)
+   - No plaintext transmitted over network
+
+T4 - Replay Attacks: MITIGATED
+   - 128-bit random nonces per request
+   - Timestamp validation (±60 second tolerance)
+   - Nonce cache prevents duplicate requests
+
+T5 - Lack of Forward Secrecy: MITIGATED
+   - ECDHE key exchange per connection
+   - HKDF key derivation (SHA-256)
+   - Session keys ephemeral and never reused
+
+T6 - Key Compromise: MITIGATED
+   - Long-term key (Ed25519 signing key): 6-month rotation recommended
+   - Session keys: Automatic rotation per connection
+   - Impact analysis: documented in code
 
 ---
 
-4. Phase 2 Interactive Client (p2client.py)
+CLIENT INTERACTIVE COMMANDS
+============================
 
-Client Commands
-python p2client.py
-python p2client.py --group-host <host> --group-port <port> --file-host <host> --file-port <port>
-- What it does: Starts the interactive client
-- Command-line options:
-  --group-host (default: localhost) - Group server host
-  --group-port (default: 12345) - Group server port
-  --file-host (default: localhost) - File server host
-  --file-port (default: 12346) - File server port
-- Examples:
-  python p2client.py --group-host localhost --group-port 12345 --file-host localhost --file-port 12346
-  python p2client.py --group-host 192.168.1.100 --group-port 12345 --file-host 192.168.1.100 --file-port 12346
+Authentication
+  getToken <user> <password>      - Authenticate and obtain token
+                                    Example: getToken alice secret123
+  token                           - Display current token
 
-Interactive Commands (in p2client.py prompt)
-
-Session Management
-getToken <user>           - Obtain token for user (creates user if doesn't exist)
-token                     - Display current token
-exit | quit               - Exit client
-help                      - Show help
-
-User Management (requires ADMIN token)
-createUser <user>         - Create new user (ADMIN only)
+User Management (requires ADMIN group)
+  createUser <user> [password]    - Create new user
+                                    Example: createUser bob newpass123
 
 Group Management
-createGroup <group>       - Create group (you become owner)
-addUserToGroup <user> <group>  - Add user to group (owner only)
-listMembers <group>       - List group members (owner only)
+  createGroup <group>             - Create group (you become owner)
+                                    Example: createGroup DEVELOPERS
+  addUserToGroup <user> <group>   - Add user to group (owner only)
+                                    Example: addUserToGroup alice DEVELOPERS
+  listMembers <group>             - List group members (owner only)
+                                    Example: listMembers DEVELOPERS
 
 File Operations
-listFiles                 - List files you can access
-upload <local> <remote> <group>  - Upload file to group
-download <remote> <local>  - Download file
+  listFiles                       - List accessible files
+  upload <local> <remote> <group> - Upload local file to group
+                                    Example: upload /tmp/doc.pdf doc.pdf ADMIN
+  download <remote> <local>       - Download file to local path
+                                    Example: download doc.pdf /tmp/doc_downloaded.pdf
+
+Utility
+  help                            - Show command help
+  exit | quit                     - Exit client
 
 ---
 
-5. Testing and Development Commands
+QUICK START EXAMPLE
+===================
 
-Compilation/Validation
-python -m py_compile Server.py Client.py group_server.py file_server.py p2client.py
-- What it does: Checks all Python files compile without syntax errors
+# Terminal 1
+python group_server.py
 
-python -m py_compile <filename>
-- What it does: Check specific file for syntax errors
+# Terminal 2
+python file_server.py
+
+# Terminal 3
+python p2client.py
+
+# In p2client prompt:
+p3> getToken admin admin123
+✓ Got token for admin
+
+p3> createGroup TEAM
+ok 
+
+p3> createUser alice secret456
+ok 
+
+p3> addUserToGroup alice TEAM
+ok 
+
+p3> upload /tmp/notes.txt notes.txt TEAM
+ok 
+
+p3> download notes.txt /tmp/notes_retrieved.txt
+✓ Wrote /tmp/notes_retrieved.txt
+
+p3> exit
+
+---
+
+TESTING ALL 6 THREATS
+=====================
+
+To verify Phase 3 hardening, test these scenarios:
+
+1. TEST T1 (Unauthorized Token Issuance)
+   - Try: getToken user wrongpassword
+   - Expected: ✗ Authentication failed
+
+2. TEST T2 (Token Forgery)
+   - Try to modify token["userName"] and reuse
+   - Expected: ✗ Invalid token signature
+
+3. TEST T3 (Network Eavesdropping)
+   - Run tcpdump during file transfer
+   - Expected: All traffic is encrypted (ciphertext only)
+
+4. TEST T4 (Replay Attack)
+   - Capture encrypted request, send twice
+   - Expected: Second attempt fails with "Nonce replay detected"
+
+5. TEST T5 (Forward Secrecy)
+   - Establish two connections, observe session keys differ
+   - Expected: Each connection uses unique key
+
+6. TEST T6 (Key Compromise)
+   - Review analysis in groupserver_state.json
+   - Expected: Session key compromise affects only that session
+
+---
+
+FILE STRUCTURE
+==============
+
+groupserver_state.json        - Persisted group server state
+  - users: list of usernames
+  - user_passwords: PBKDF2 hashes
+  - groups: group memberships
+  - server_signing_key_private: Ed25519 private key (base64)
+  - nonce_cache: replay protection cache
+
+fileserver_metadata.json      - Persisted file server state
+  - files: file metadata (group, uploader)
+  - nonce_cache: replay protection cache
+
+storage/                      - Directory with uploaded files
+  - temp.txt
+  - doc.pdf
+  - etc.
+
+---
+
+TROUBLESHOOTING
+===============
+
+"Could not load group server public key"
+  - Ensure group_server.py runs first and creates groupserver_state.json
+  - File server reads public key from that file
+
+"Timestamp out of tolerance"
+  - Client and server clocks are >60 seconds apart
+  - Sync system clocks or modify TIMESTAMP_TOLERANCE in code
+
+"Nonce replay detected"
+  - Same request sent twice in short period
+  - This is expected behavior (replay protection working)
+  - Wait for session to reset or use new connection
+
+"Invalid token signature"
+  - Token was modified or from different server
+  - Ensure client and server are synchronized
+  - Regenerate token with getToken command
+
+---
+
+PROTOCOL OVERVIEW
+=================
+
+1. ECDHE Handshake (UNENCRYPTED, ephemeral keys)
+   - Client: sends ephemeral X25519 public key
+   - Server: responds with ephemeral X25519 public key
+   - Both derive shared AES-256 session key using HKDF
+
+2. Encrypted Request/Response (AES-256-GCM)
+   - Client: adds nonce + timestamp, encrypts request
+   - Server: validates nonce/timestamp, decrypts, processes
+   - Server: encrypts response, sends back
+   - Client: decrypts response
+
+3. Token Verification (Ed25519 signatures)
+   - Group server: signs every token with Ed25519 private key
+   - Client: includes token + signature in file server requests
+   - File server: verifies signature with Ed25519 public key before accepting
+
+---
+
+COMPILATION CHECK
+=================
+
+python -m py_compile group_server.py file_server.py p2client.py
+- Validates all files for syntax errors
+
+---
+
+ESTIMATED PERFORMANCE
+======================
+
+- ECDHE handshake: ~1-2ms per connection
+- AES-256-GCM encryption/decryption: <1ms per message
+- Token verification: <1ms per request
+- Overall latency impact: minimal for interactive use
 
