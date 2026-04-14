@@ -1,5 +1,3 @@
-Distributed File Sharing System - Complete Command Reference
-
 1. Basic TCP Server/Client (Server.py + Client.py)
 
 Server Commands
@@ -56,7 +54,7 @@ python file_server.py --host <host> --port <port>
 Client Commands
 python p2client.py
 python p2client.py --group-host <host> --group-port <port> --file-host <host> --file-port <port>
-- What it does: Starts the interactive client for Phase 2 operations
+- What it does: Starts the interactive client
 - Command-line options:
   --group-host (default: localhost) - Group server host
   --group-port (default: 12345) - Group server port
@@ -98,97 +96,3 @@ python -m py_compile Server.py Client.py group_server.py file_server.py p2client
 python -m py_compile <filename>
 - What it does: Check specific file for syntax errors
 
-Network Testing
-ss -tlnp | grep <port>
-- What it does: Check if port is listening on the system
-
-nc -vz <host> <port>
-- What it does: Test TCP connection to host:port
-
-telnet <host> <port>
-- What it does: Interactive TCP connection test
-
-ping <host>
-- What it does: Test basic network connectivity
-
-File Operations
-echo "test content" > test.txt
-- What it does: Create a test file with content
-
-cat <filename>
-- What it does: Display file contents
-
-ls -la
-- What it does: List directory contents with details
-
-wc -c <filename>
-- What it does: Show file size in bytes
-
----
-
-6. Complete Phase 2 Demo Workflow
-
-# Terminal 1: Start Group Server
-python group_server.py --host 0.0.0.0 --port 12345
-
-# Terminal 2: Start File Server
-python file_server.py --host 0.0.0.0 --port 12346
-
-# Terminal 3: Run Client
-python p2client.py --group-host localhost --group-port 12345 --file-host localhost --file-port 12346
-
-# In client prompt:
-getToken admin
-createUser alice
-createGroup project
-addUserToGroup alice project
-getToken alice
-echo "hello world" > test.txt
-upload test.txt hello.txt project
-listFiles
-download hello.txt downloaded.txt
-exit
-
----
-
-7. Remote Connection Commands
-
-Find Network Information
-hostname -I
-- What it does: Show local IP addresses
-
-curl -s https://ifconfig.me
-- What it does: Show public IP address
-
-Remote Client Connections
-python Client.py <your-ip> 2004
-- What it does: Connect basic client to remote server
-
-python p2client.py --group-host <your-ip> --group-port 12345 --file-host <your-ip> --file-port 12346
-- What it does: Connect Phase 2 client to remote servers
-
----
-
-8. Port Forwarding (for internet access)
-
-Firewall Management
-sudo ufw status
-- What it does: Check firewall status
-
-sudo ufw allow 2004/tcp
-sudo ufw allow 12345/tcp
-sudo ufw allow 12346/tcp
-- What it does: Allow TCP ports through firewall
-
-Router Configuration
-- What it does: Forward external ports 2004, 12345, 12346 to your machine's local IP
-- Note: Configure in your router's admin interface
-
----
-
-Notes
-- Tokens are plain JSON objects (no crypto for Phase 2)
-- Server state is stored in JSON files: groupserver_state.json, fileserver_metadata.json
-- Uploaded files are stored in the storage/ directory
-- All servers support multiple concurrent clients
-- Use Ctrl+C to stop servers
